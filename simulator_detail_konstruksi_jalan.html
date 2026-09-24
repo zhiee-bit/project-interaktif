@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Simulator Detail Konstruksi Jalan</title>
+
+<style>
+:root{
+  --bg:#f5f3ee;
+  --card:#ffffff;
+  --ink:#1e2a25;
+  --sub:#5b6b63;
+  --accent:#b5651d;
+  --accent2:#3d6b52;
+  --line:#dcd6c9;
+  --shadow:0 2px 10px rgba(30,42,37,.08);
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:"Segoe UI",Roboto,system-ui,sans-serif;
+  line-height:1.55;
+}
+
+header{
+  padding:28px 18px 18px;
+  text-align:center;
+}
+
+header h1{
+  margin:0 0 6px;
+  font-size:clamp(1.3rem,3.5vw,1.9rem);
+}
+
+header p{
+  margin:0;
+  color:var(--sub);
+  font-size:.95rem;
+}
+
+main{
+  max-width:1000px;
+  margin:0 auto;
+  padding:0 16px 50px;
+}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:20px 22px;
+  margin-bottom:16px;
+  box-shadow:var(--shadow);
+}
+
+.card h2{
+  margin-top:0;
+  color:var(--accent2);
+  font-size:1.2rem;
+}
+
+.sim-grid{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:22px;
+}
+
+@media(min-width:760px){
+  .sim-grid{
+    grid-template-columns:360px 1fr;
+    align-items:start;
+  }
+}
+
+.control-box{
+  background:var(--bg);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:15px;
+}
+
+.layer-ctrl{
+  margin-bottom:14px;
+  padding-bottom:13px;
+  border-bottom:1px dashed var(--line);
+}
+
+.layer-ctrl:last-child{
+  border-bottom:none;
+}
+
+.layer-ctrl label{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  font-size:.88rem;
+  font-weight:600;
+  margin-bottom:6px;
+}
+
+.layer-ctrl select,
+.layer-ctrl input[type=range],
+.scale-box select{
+  width:100%;
+}
+
+.layer-ctrl select,
+.scale-box select{
+  padding:8px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:var(--card);
+  color:var(--ink);
+}
+
+.scale-box{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:15px;
+}
+
+.scale-box label{
+  white-space:nowrap;
+  font-size:.88rem;
+  font-weight:600;
+}
+
+.scale-box select{
+  max-width:130px;
+}
+
+.actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:15px;
+}
+
+button.act{
+  border:none;
+  padding:10px 16px;
+  border-radius:9px;
+  font-size:.9rem;
+  cursor:pointer;
+  background:var(--accent2);
+  color:white;
+}
+
+button.secondary{
+  background:var(--accent);
+}
+
+button.act:hover{
+  opacity:.9;
+}
+
+.svg-wrap{
+  background:#eaf3ee;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:10px;
+  overflow:hidden;
+}
+
+svg{
+  width:100%;
+  height:auto;
+  display:block;
+}
+
+.legend{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:12px;
+  font-size:.78rem;
+}
+
+.legend span{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+}
+
+.swatch{
+  width:14px;
+  height:14px;
+  border-radius:3px;
+  border:1px solid var(--line);
+}
+
+.info{
+  margin-top:15px;
+  padding:12px;
+  background:var(--bg);
+  border-radius:9px;
+  font-size:.83rem;
+  color:var(--sub);
+}
+
+.status{
+  margin-top:12px;
+  font-size:.85rem;
+  font-weight:600;
+  color:var(--accent2);
+  min-height:20px;
+}
+
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#1a1d1b;
+    --card:#242824;
+    --ink:#eef0ec;
+    --sub:#a7b0a9;
+    --line:#3a3f3a;
+    --shadow:0 2px 10px rgba(0,0,0,.4);
+  }
+
+  .svg-wrap{
+    background:#dfece5;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>🛠️ Simulator Detail Konstruksi Jalan</h1>
+  <p>Atur jenis material dan ketebalan lapisan untuk melihat perubahan potongan perkerasan secara langsung.</p>
+</header>
+
+<main>
+  <div class="card">
+
+    <h2>Simulator Potongan Lapisan Perkerasan Jalan</h2>
+
+    <div class="sim-grid">
+
+      <!-- KONTROL -->
+      <div class="control-box">
+
+        <div class="scale-box">
+          <label for="scaleSel">Skala:</label>
+          <select id="scaleSel">
+            <option value="20">1 : 20</option>
+            <option value="50" selected>1 : 50</option>
+            <option value="100">1 : 100</option>
+          </select>
+        </div>
+
+        <div id="layerControls"></div>
+
+        <div class="actions">
+          <button class="act" id="resetBtn" type="button">
+            ↺ Reset
+          </button>
+
+          <button class="act secondary" id="downloadBtn" type="button">
+            ⬇ Simpan Gambar
+          </button>
+        </div>
+
+        <div class="status" id="status"></div>
+
+      </div>
+
+      <!-- GAMBAR -->
+      <div>
+
+        <div class="svg-wrap">
+          <svg
+            id="crossSvg"
+            viewBox="0 0 620 430"
+            xmlns="http://www.w3.org/2000/svg">
+          </svg>
+        </div>
+
+        <div class="legend" id="legendBox"></div>
+
+        <div class="info">
+          <b>Cara menggunakan:</b><br>
+          1. Pilih material pada setiap lapisan.<br>
+          2. Geser slider untuk mengubah ketebalan.<br>
+          3. Pilih skala gambar.<br>
+          4. Perhatikan perubahan gambar potongan secara langsung.<br>
+          5. Gunakan tombol <b>Simpan Gambar</b> jika ingin menyimpan hasil simulator.
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<script>
+/* =========================================================
+   DATA MATERIAL
+========================================================= */
+
+const materials = {
+
+  subgrade:{
+    name:"Tanah Dasar (Subgrade)",
+    color:"#a9895f",
+    pattern:"dots"
+  },
+
+  subbase:{
+    name:"Lapis Pondasi Bawah (Agregat B)",
+    color:"#c9b98a",
+    pattern:"crossx"
+  },
+
+  base:{
+    name:"Lapis Pondasi Atas (Agregat A)",
+    color:"#8c8c8c",
+    pattern:"brick"
+  },
+
+  binder:{
+    name:"Lapis Pengikat (AC-BC)",
+    color:"#3a3a3a",
+    pattern:"diag"
+  },
+
+  surface:{
+    name:"Lapis Permukaan (AC-WC)",
+    color:"#1c1c1c",
+    pattern:"diagdense"
+  },
+
+  concrete:{
+    name:"Beton (Rigid Pavement)",
+    color:"#b9b9b9",
+    pattern:"cross"
+  },
+
+  sand:{
+    name:"Lapis Pasir Urug",
+    color:"#e3cf9a",
+    pattern:"dots2"
+  }
+
+};
+
+
+/* =========================================================
+   KONDISI DEFAULT
+========================================================= */
+
+const defaultLayers = [
+
+  {
+    key:"subgrade",
+    thick:30
+  },
+
+  {
+    key:"subbase",
+    thick:20
+  },
+
+  {
+    key:"base",
+    thick:15
+  },
+
+  {
+    key:"binder",
+    thick:6
+  },
+
+  {
+    key:"surface",
+    thick:4
+  }
+
+];
+
+let layers = JSON.parse(JSON.stringify(defaultLayers));
+
+
+/* =========================================================
+   MEMBUAT KONTROL LAPISAN
+========================================================= */
+
+function buildControls(){
+
+  const wrap = document.getElementById("layerControls");
+
+  wrap.innerHTML = "";
+
+  layers.forEach((layer,index)=>{
+
+    const div = document.createElement("div");
+
+    div.className = "layer-ctrl";
+
+    const options = Object.keys(materials)
+      .map(key => {
+
+        return `
+          <option
+            value="${key}"
+            ${key === layer.key ? "selected" : ""}>
+            ${materials[key].name}
+          </option>
+        `;
+
+      })
+      .join("");
+
+    div.innerHTML = `
+
+      <label>
+        <span>Lapisan ${index + 1}</span>
+        <span id="thickLbl${index}">
+          ${layer.thick} cm
+        </span>
+      </label>
+
+      <select
+        class="matSel"
+        data-index="${index}">
+        ${options}
+      </select>
+
+      <input
+        class="thickRange"
+        type="range"
+        min="2"
+        max="40"
+        value="${layer.thick}"
+        data-index="${index}">
+    `;
+
+    wrap.appendChild(div);
+
+  });
+
+
+  /* GANTI MATERIAL */
+
+  wrap.querySelectorAll(".matSel").forEach(select=>{
+
+    select.addEventListener("change",event=>{
+
+      const index = Number(event.target.dataset.index);
+
+      layers[index].key = event.target.value;
+
+      render();
+
+    });
+
+  });
+
+
+  /* GANTI KETEBALAN */
+
+  wrap.querySelectorAll(".thickRange").forEach(range=>{
+
+    range.addEventListener("input",event=>{
+
+      const index = Number(event.target.dataset.index);
+
+      layers[index].thick = Number(event.target.value);
+
+      document.getElementById(
+        "thickLbl" + index
+      ).textContent =
+        event.target.value + " cm";
+
+      render();
+
+    });
+
+  });
+
+}
+
+
+/* =========================================================
+   POLA ARSIR SVG
+========================================================= */
+
+function patternDefs(){
+
+  return `
+
+    <pattern
+      id="p-dots"
+      width="8"
+      height="8"
+      patternUnits="userSpaceOnUse">
+
+      <circle
+        cx="4"
+        cy="4"
+        r="1.1"
+        fill="#5b4a30"/>
+
+    </pattern>
+
+
+    <pattern
+      id="p-dots2"
+      width="6"
+      height="6"
+      patternUnits="userSpaceOnUse">
+
+      <circle
+        cx="3"
+        cy="3"
+        r="0.8"
+        fill="#8a6f3d"/>
+
+    </pattern>
+
+
+    <pattern
+      id="p-crossx"
+      width="8"
+      height="8"
+      patternUnits="userSpaceOnUse">
+
+      <path
+        d="M0,0 L8,8 M8,0 L0,8"
+        stroke="#6b5a34"
+        stroke-width="0.8"/>
+
+    </pattern>
+
+
+    <pattern
+      id="p-brick"
+      width="10"
+      height="6"
+      patternUnits="userSpaceOnUse">
+
+      <path
+        d="M0,3 H10 M5,0 V3 M0,3 V6 M10,3 V6"
+        stroke="#5a5a5a"
+        stroke-width="0.7"
+        fill="none"/>
+
+    </pattern>
+
+
+    <pattern
+      id="p-diag"
+      width="6"
+      height="6"
+      patternUnits="userSpaceOnUse"
+      patternTransform="rotate(45)">
+
+      <line
+        x1="0"
+        y1="0"
+        x2="0"
+        y2="6"
+        stroke="#000"
+        stroke-width="1.2"/>
+
+    </pattern>
+
+
+    <pattern
+      id="p-diagdense"
+      width="4"
+      height="4"
+      patternUnits="userSpaceOnUse"
+      patternTransform="rotate(45)">
+
+      <line
+        x1="0"
+        y1="0"
+        x2="0"
+        y2="4"
+        stroke="#000"
+        stroke-width="1.4"/>
+
+    </pattern>
+
+
+    <pattern
+      id="p-cross"
+      width="7"
+      height="7"
+      patternUnits="userSpaceOnUse">
+
+      <path
+        d="M0,0 L7,7 M7,0 L0,7"
+        stroke="#555"
+        stroke-width="0.9"/>
+
+    </pattern>
+
+  `;
+
+}
+
+
+function fillFor(key){
+
+  return `url(#p-${materials[key].pattern})`;
+
+}
+
+
+/* =========================================================
+   RENDER GAMBAR
+========================================================= */
+
+function render(){
+
+  const svg = document.getElementById("crossSvg");
+
+  const total =
+    layers.reduce(
+      (sum,layer)=>sum + layer.thick,
+      0
+    ) || 1;
+
+
+  const chartH = 310;
+
+  const chartW = 370;
+
+  const x0 = 55;
+
+  const y0 = 75;
+
+  let y = y0;
+
+  let drawing = "";
+
+
+  layers.forEach((layer,index)=>{
+
+    const h =
+      (layer.thick / total) * chartH;
+
+    const material =
+      materials[layer.key];
+
+
+    /* WARNA DASAR */
+
+    drawing += `
+
+      <rect
+        x="${x0}"
+        y="${y}"
+        width="${chartW}"
+        height="${h}"
+        fill="${material.color}"
+        stroke="#202820"
+        stroke-width="1"/>
+    `;
+
+
+    /* ARSIR */
+
+    drawing += `
+
+      <rect
+        x="${x0}"
+        y="${y}"
+        width="${chartW}"
+        height="${h}"
+        fill="${fillFor(layer.key)}"
+        opacity="0.65"/>
+    `;
+
+
+    /* NAMA MATERIAL */
+
+    drawing += `
+
+      <text
+        x="${x0 + chartW/2}"
+        y="${y + h/2 + 4}"
+        text-anchor="middle"
+        font-size="11"
+        font-weight="600"
+        fill="${layer.key === "surface" || layer.key === "binder" ? "#fff" : "#222"}">
+
+        ${material.name}
+
+      </text>
+    `;
+
+
+    /* UKURAN */
+
+    drawing += `
+
+      <text
+        x="${x0 + chartW + 12}"
+        y="${y + h/2 + 4}"
+        font-size="11"
+        fill="#222">
+
+        ${layer.thick} cm
+
+      </text>
+    `;
+
+
+    y += h;
+
+  });
+
+
+  /* DIMENSI TOTAL */
+
+  const totalText =
+    layers.reduce(
+      (sum,layer)=>sum + layer.thick,
+      0
+    );
+
+
+  svg.innerHTML = `
+
+    <defs>
+      ${patternDefs()}
+    </defs>
+
+
+    <rect
+      width="620"
+      height="430"
+      fill="#eaf3ee"/>
+
+
+    <text
+      x="55"
+      y="25"
+      font-size="17"
+      font-weight="700"
+      fill="#26352e">
+
+      DETAIL POTONGAN PERKERASAN JALAN
+
+    </text>
+
+
+    <text
+      x="55"
+      y="48"
+      font-size="12"
+      fill="#5b6b63">
+
+      Skala 1 : ${document.getElementById("scaleSel").value}
+
+    </text>
+
+
+    ${drawing}
+
+
+    <!-- GARIS DIMENSI TOTAL -->
+
+    <line
+      x1="450"
+      y1="${y0}"
+      x2="450"
+      y2="${y0 + chartH}"
+      stroke="#333"
+      stroke-width="1"/>
+
+
+    <line
+      x1="443"
+      y1="${y0}"
+      x2="457"
+      y2="${y0}"
+      stroke="#333"
+      stroke-width="1"/>
+
+
+    <line
+      x1="443"
+      y1="${y0 + chartH}"
+      x2="457"
+      y2="${y0 + chartH}"
+      stroke="#333"
+      stroke-width="1"/>
+
+
+    <text
+      x="470"
+      y="${y0 + chartH/2}"
+      font-size="11"
+      fill="#333">
+
+      Total ${totalText} cm
+
+    </text>
+
+
+    <!-- TANAH ASLI -->
+
+    <line
+      x1="${x0}"
+      y1="${y0 + chartH + 10}"
+      x2="${x0 + chartW}"
+      y2="${y0 + chartH + 10}"
+      stroke="#555"
+      stroke-width="1"/>
+
+
+    <text
+      x="${x0}"
+      y="${y0 + chartH + 30}"
+      font-size="11"
+      fill="#555">
+
+      Tanah asli / dasar
+
+    </text>
+
+
+    <!-- ARAH -->
+
+    <text
+      x="${x0 + chartW/2}"
+      y="415"
+      text-anchor="middle"
+      font-size="11"
+      fill="#5b6b63">
+
+      Potongan melintang lapisan perkerasan
+
+    </text>
+
+  `;
+
+
+  /* LEGEND */
+
+  const legend =
+    document.getElementById("legendBox");
+
+  const used = [
+    ...new Set(
+      layers.map(layer=>layer.key)
+    )
+  ];
+
+
+  legend.innerHTML = used
+    .map(key=>`
+
+      <span>
+
+        <span
+          class="swatch"
+          style="background:${materials[key].color}">
+        </span>
+
+        ${materials[key].name}
+
+      </span>
+
+    `)
+    .join("");
+
+}
+
+
+/* =========================================================
+   RESET
+========================================================= */
+
+document
+  .getElementById("resetBtn")
+  .addEventListener("click",()=>{
+
+    layers =
+      JSON.parse(
+        JSON.stringify(defaultLayers)
+      );
+
+    buildControls();
+
+    render();
+
+    document.getElementById("status")
+      .textContent =
+      "Simulator telah dikembalikan ke pengaturan awal.";
+
+  });
+
+
+/* =========================================================
+   GANTI SKALA
+========================================================= */
+
+document
+  .getElementById("scaleSel")
+  .addEventListener("change",()=>{
+
+    render();
+
+  });
+
+
+/* =========================================================
+   SIMPAN GAMBAR SVG
+========================================================= */
+
+document
+  .getElementById("downloadBtn")
+  .addEventListener("click",()=>{
+
+    const svg =
+      document.getElementById("crossSvg");
+
+    const serializer =
+      new XMLSerializer();
+
+    const source =
+      serializer.serializeToString(svg);
+
+    const blob =
+      new Blob(
+        [source],
+        {
+          type:"image/svg+xml;charset=utf-8"
+        }
+      );
+
+    const url =
+      URL.createObjectURL(blob);
+
+    const link =
+      document.createElement("a");
+
+    link.href = url;
+
+    link.download =
+      "simulator-detail-konstruksi-jalan.svg";
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
+
+
+    document.getElementById("status")
+      .textContent =
+      "Gambar simulator berhasil disimpan.";
+
+  });
+
+
+/* =========================================================
+   JALANKAN
+========================================================= */
+
+buildControls();
+
+render();
+
+</script>
+
+</body>
+</html>
